@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <!-- Importing Font Awesome for a professional icon set -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Define CSS variables for a clean, modern color scheme */
+        :root {
+            --primary-color: #3f51b5; /* A deep indigo for primary accents */
+            --secondary-color: #f7f9fc; /* Off-white for background */
+            --sidebar-bg: #ffffff; /* White for the sidebar */
+            --text-dark: #333d47;
+            --text-light: #707b8b;
+            --hover-bg: #e8eaf6; /* Light purple for hover effects */
+            --shadow-subtle: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --shadow-bold: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Base styles with a fluid body and clean typography */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary-color);
+            display: flex;
+            overflow-x: hidden;
+            color: var(--text-dark);
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Main dashboard layout */
+        .dashboard-container {
+            display: flex;
+            width: 100%;
+        }
+
+        /* Sidebar styles for a sleek slide-out effect */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--text-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            /* Smoother animation with a custom cubic-bezier function */
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease-in-out;
+            transform: translateX(-100%);
+            box-shadow: var(--shadow-bold);
+            z-index: 1000;
+            padding-top: 60px;
+            overflow-y: auto; /* Enable scrolling if content is long */
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        /* Top navigation bar with a distinct color */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: var(--shadow-subtle);
+            z-index: 1001;
+        }
+
+        /* Menu icon with a subtle, friendly hover effect */
+        .menu-icon {
+            cursor: pointer;
+            width: 30px;
+            height: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .menu-icon .bar {
+            width: 100%;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 'X' transformation animation */
+        .menu-icon.active .bar:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-icon.active .bar:nth-child(1) {
+            transform: translateY(8.5px) rotate(45deg);
+        }
+
+        .menu-icon.active .bar:nth-child(3) {
+            transform: translateY(-8.5px) rotate(-45deg);
+        }
+
+        .top-nav-items a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 16px;
+            position: relative;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .top-nav-items a:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        .dashboard-title {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+            margin: 0 20px 30px 20px;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            position: relative;
+        }
+
+        /* Enhanced hover and active states for navigation items */
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--text-light);
+            transition: background-color 0.3s, color 0.3s, transform 0.3s ease-out, box-shadow 0.3s ease-out;
+            border-radius: 12px;
+            margin: 5px 10px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav .nav-item i {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        /* Style for the dropdown icon */
+        .dropdown-toggle-icon {
+            margin-left: auto; /* Pushes the icon to the right */
+            transform: rotate(0deg);
+            transition: transform 0.3s ease-out;
+        }
+
+        .dropdown-toggle-icon.open {
+            transform: rotate(-180deg);
+        }
+
+        .sidebar-nav .nav-item:hover {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        /* Active class for the currently selected nav item */
+        .sidebar-nav .nav-item.active {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+            font-weight: 600;
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(0); /* Ensure active item doesn't move */
+        }
+
+        /* The dropdown menu is now initially hidden */
+        .dropdown-menu {
+            display: none;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: #fcfdff;
+            border-radius: 0 0 12px 12px;
+            padding-left: 20px; /* Add indentation for sub-items */
+        }
+
+        /* Show the dropdown menu when it has the 'open' class */
+        .dropdown-menu.open {
+            display: block;
+        }
+
+        .dropdown-item .dropdown-menu li a {
+            padding: 10px 10px;
+            display: block;
+            font-size: 15px;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        .dropdown-item .dropdown-menu li a:hover {
+            background-color: #f1f3f7;
+            color: var(--primary-color);
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 20px 20px 20px;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 0;
+            width: 100%;
+        }
+
+        .dashboard-container.sidebar-open .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+
+        /* Content section with a smooth fade-in animation */
+        .content-section {
+            display: none;
+            background-color: var(--sidebar-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-bold);
+            animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Keyframe animation for a more dynamic fade-in */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* Styles for the new Availability feature */
+        .availability-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        .availability-container label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .availability-container input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .availability-container button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+        }
+
+        .availability-container button:hover {
+            background-color: #30449a;
+            transform: translateY(-2px);
+        }
+        
+        .availability-status {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-vacant {
+            color: #d32f2f; /* Red for vacant */
+        }
+        
+        .status-available {
+            color: #43a047; /* Green for available */
+        }
+
+        /* Responsive design for mobile view */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .dashboard-container.sidebar-open .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Top Navigation Bar -->
+        <header class="top-navbar">
+            <div class="menu-icon" onclick="toggleSidebar()">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <nav class="top-nav-items">
+                <a href="#" class="top-nav-link">Home</a>
+                <a href="#" class="top-nav-link">Settings</a>
+                <a href="#" class="top-nav-link">Profile</a>
+            </nav>
+        </header>
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <h2 class="dashboard-title">Dashboard</h2>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-item active" data-section="announcements"><i class="fas fa-bullhorn"></i>Announcements</a></li>
+                    <li><a href="#" class="nav-item" data-section="rating"><i class="fas fa-star"></i>Rating</a></li>
+                    <li><a href="#" data-section="favorites" class="nav-item"><i class="fas fa-heart"></i>Favorites</a></li>
+                    <li><a href="#" class="nav-item" data-section="teaching-materials"><i class="fas fa-book-open"></i>Teaching Materials</a></li>
+                    <li><a href="#" class="nav-item" data-section="attendance"><i class="fas fa-check-circle"></i>Attendance</a></li>
+                    <li class="dropdown-item">
+                        <!-- The "Lesson" link now acts as a dropdown toggle -->
+                        <a href="#" class="nav-item dropdown-toggle" data-target="#lesson-menu"><i class="fas fa-graduation-cap"></i>Lesson<i class="fas fa-caret-down dropdown-toggle-icon"></i></a>
+                        <!-- The dropdown menu is initially hidden and will be toggled with JavaScript -->
+                        <ul class="dropdown-menu" id="lesson-menu">
+                            <li><a href="#" data-section="book" class="nav-item"><i class="fas fa-book"></i>Book</a></li>
+                            <li><a href="#" data-section="learning-kit" class="nav-item"><i class="fas fa-box"></i>Learning Kit</a></li>
+                            <li><a href="#" data-section="students-info" class="nav-item"><i class="fas fa-users"></i>Student's Info</a></li>
+                            <li><a href="#" data-section="message-to-students" class="nav-item"><i class="fas fa-envelope"></i>Message to Students</a></li>
+                            <li><a href="#" data-section="lesson-review" class="nav-item"><i class="fas fa-pen-fancy"></i>Lesson Review</a></li>
+                            <li><a href="#" data-section="lesson-history" class="nav-item"><i class="fas fa-history"></i>Lesson History</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="nav-item" data-section="availability"><i class="fas fa-calendar-alt"></i>Availability</a></li>
+                    <li><a href="#" class="nav-item" data-section="rank"><i class="fas fa-medal"></i>Rank</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Welcome to Your Dashboard!</h1>
+            </header>
+            <section id="announcements" class="content-section active">
+                <h2>Announcements</h2>
+                <p>This is where you'll see important announcements.</p>
+            </section>
+            <section id="rating" class="content-section">
+                <h2>Rating</h2>
+                <p>View your student ratings and feedback here.</p>
+            </section>
+            <section id="favorites" class="content-section">
+                <h2>Favorites</h2>
+                <p>Manage your favorite lessons and materials.</p>
+            </section>
+            <section id="teaching-materials" class="content-section">
+                <h2>Teaching Materials</h2>
+                <p>Access and upload your teaching materials.</p>
+            </section>
+            <section id="attendance" class="content-section">
+                <h2>Attendance</h2>
+                <p>Track student attendance for your classes.</p>
+            </section>
+            <section id="book" class="content-section">
+                <h2>Book</h2>
+                <p>Manage lesson bookings and schedules.</p>
+            </section>
+            <section id="learning-kit" class="content-section">
+                <h2>Learning Kit</h2>
+                <p>Explore and organize your learning kits.</p>
+            </section>
+            <section id="students-info" class="content-section">
+                <h2>Student's Info</h2>
+                <p>View and update student information.</p>
+            </section>
+            <section id="message-to-students" class="content-section">
+                <h2>Message to Students</h2>
+                <p>Send messages and updates to your students.</p>
+            </section>
+            <section id="lesson-review" class="content-section">
+                <h2>Lesson Review</h2>
+                <p>Review past lessons and student performance.</p>
+            </section>
+            <section id="lesson-history" class="content-section">
+                <h2>Lesson History</h2>
+                <p>See a complete history of all your lessons.</p>
+            </section>
+            <section id="availability" class="content-section">
+                <h2>Set Availability</h2>
+                <p>Choose a day to set your availability status.</p>
+                <div class="availability-container">
+                    <label for="date-picker">Select Date:</label>
+                    <input type="date" id="date-picker" value="">
+                    <button id="toggle-availability">Set as Vacant</button>
+                    <p>Current Status: <span id="availability-status"></span></p>
+                </div>
+            </section>
+            <section id="rank" class="content-section">
+                <h2>Rank</h2>
+                <p>Check your teaching rank and achievements.</p>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // JavaScript for sidebar functionality
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const dashboardContainer = document.querySelector('.dashboard-container');
+            const menuIcon = document.querySelector('.menu-icon');
+
+            sidebar.classList.toggle('active');
+            menuIcon.classList.toggle('active');
+            dashboardContainer.classList.toggle('sidebar-open');
+        }
+
+        // JavaScript for content section switching
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-item');
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            const dropdownMenu = document.getElementById('lesson-menu');
+            const dropdownIcon = document.querySelector('.dropdown-toggle-icon');
+
+            // Handle the dropdown toggle
+            dropdownToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                dropdownMenu.classList.toggle('open');
+                dropdownIcon.classList.toggle('open');
+            });
+
+            // Handle the content switching for all other links
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const sectionId = link.dataset.section;
+
+                    // Only handle links with a data-section attribute
+                    if (sectionId) {
+                        e.preventDefault();
+
+                        // Deactivate all navigation links first
+                        document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        
+                        // Hide all content sections
+                        document.querySelectorAll('.content-section').forEach(section => {
+                            section.classList.remove('active');
+                        });
+
+                        // Show the selected section and activate the clicked link
+                        const targetSection = document.getElementById(sectionId);
+                        if (targetSection) {
+                            targetSection.classList.add('active');
+                        }
+                        link.classList.add('active');
+                    }
+                });
+            });
+            
+            // --- Availability Feature Logic ---
+            const datePicker = document.getElementById('date-picker');
+            const toggleButton = document.getElementById('toggle-availability');
+            const statusDisplay = document.getElementById('availability-status');
+
+            let availabilityData = JSON.parse(localStorage.getItem('teacherAvailability')) || {};
+
+            // Helper function to update the UI status based on the selected date
+            function updateStatusUI(date) {
+                const status = availabilityData[date] || 'available';
+                statusDisplay.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                statusDisplay.className = ''; // Clear existing classes
+                statusDisplay.classList.add('availability-status', `status-${status}`);
+                toggleButton.textContent = status === 'available' ? 'Set as Vacant' : 'Set as Available';
+            }
+
+            // Set the default date to today's date
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            const day = today.getDate().toString().padStart(2, '0');
+            const defaultDate = `${year}-${month}-${day}`;
+            datePicker.value = defaultDate;
+            updateStatusUI(defaultDate);
+
+            // Listen for changes on the date picker
+            datePicker.addEventListener('change', () => {
+                const selectedDate = datePicker.value;
+                updateStatusUI(selectedDate);
+            });
+
+            // Listen for the button click to toggle availability
+            toggleButton.addEventListener('click', () => {
+                const selectedDate = datePicker.value;
+                if (!selectedDate) {
+                    alert("Please select a date first.");
+                    return;
+                }
+
+                const currentStatus = availabilityData[selectedDate] || 'available';
+                
+                // Toggle the status
+                const newStatus = currentStatus === 'available' ? 'vacant' : 'available';
+                availabilityData[selectedDate] = newStatus;
+
+                // Save to localStorage
+                localStorage.setItem('teacherAvailability', JSON.stringify(availabilityData));
+
+                // Update the UI
+                updateStatusUI(selectedDate);
+            });
+        });
+    </script>
+</body>
+</html>

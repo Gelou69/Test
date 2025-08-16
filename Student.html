@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <!-- Importing Font Awesome for a professional icon set -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Define CSS variables for a clean, modern color scheme */
+        :root {
+            --primary-color: #3f51b5; /* A deep indigo for primary accents */
+            --secondary-color: #f7f9fc; /* Off-white for background */
+            --sidebar-bg: #ffffff; /* White for the sidebar */
+            --text-dark: #333d47;
+            --text-light: #707b8b;
+            --hover-bg: #e8eaf6; /* Light purple for hover effects */
+            --shadow-subtle: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --shadow-bold: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Base styles with a fluid body and clean typography */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary-color);
+            display: flex;
+            overflow-x: hidden;
+            color: var(--text-dark);
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Main dashboard layout */
+        .dashboard-container {
+            display: flex;
+            width: 100%;
+        }
+
+        /* Sidebar styles for a sleek slide-out effect */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--text-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            /* Smoother animation with a custom cubic-bezier function */
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease-in-out;
+            transform: translateX(-100%);
+            box-shadow: var(--shadow-bold);
+            z-index: 1000;
+            padding-top: 60px;
+            overflow-y: auto; /* Enable scrolling if content is long */
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        /* Top navigation bar with a distinct color */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 98%;
+            height: 60px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: var(--shadow-subtle);
+            z-index: 1001;
+        }
+
+        /* Menu icon with a subtle, friendly hover effect */
+        .menu-icon {
+            cursor: pointer;
+            width: 30px;
+            height: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .menu-icon .bar {
+            width: 100%;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 'X' transformation animation */
+        .menu-icon.active .bar:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-icon.active .bar:nth-child(1) {
+            transform: translateY(8.5px) rotate(45deg);
+        }
+
+        .menu-icon.active .bar:nth-child(3) {
+            transform: translateY(-8.5px) rotate(-45deg);
+        }
+
+        .top-nav-items a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 16px;
+            position: relative;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .top-nav-items a:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        .dashboard-title {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+            margin: 0 20px 30px 20px;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav li {
+            position: relative;
+        }
+
+        /* Enhanced hover and active states for navigation items */
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--text-light);
+            transition: background-color 0.3s, color 0.3s, transform 0.3s ease-out, box-shadow 0.3s ease-out;
+            border-radius: 12px;
+            margin: 5px 10px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav .nav-item i {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        /* Style for the dropdown icon */
+        .dropdown-toggle-icon {
+            margin-left: auto; /* Pushes the icon to the right */
+            transform: rotate(0deg);
+            transition: transform 0.3s ease-out;
+        }
+
+        .dropdown-toggle-icon.open {
+            transform: rotate(-180deg);
+        }
+
+        .sidebar-nav .nav-item:hover {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        /* Active class for the currently selected nav item */
+        .sidebar-nav .nav-item.active {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+            font-weight: 600;
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(0); /* Ensure active item doesn't move */
+        }
+
+        /* The dropdown menu is now initially hidden */
+        .dropdown-menu {
+            display: none;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: #fcfdff;
+            border-radius: 0 0 12px 12px;
+            padding-left: 20px; /* Add indentation for sub-items */
+        }
+
+        /* Show the dropdown menu when it has the 'open' class */
+        .dropdown-menu.open {
+            display: block;
+        }
+
+        .dropdown-item .dropdown-menu li a {
+            padding: 10px 10px;
+            display: block;
+            font-size: 15px;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        .dropdown-item .dropdown-menu li a:hover {
+            background-color: #f1f3f7;
+            color: var(--primary-color);
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 20px 20px 20px;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 0;
+            width: 100%;
+        }
+
+        .dashboard-container.sidebar-open .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+
+        /* Content section with a smooth fade-in animation */
+        .content-section {
+            display: none;
+            background-color: var(--sidebar-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-bold);
+            animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Keyframe animation for a more dynamic fade-in */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* Styles for the new Availability feature */
+        .availability-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        .availability-container label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .availability-container input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        /* Style for the "Book Teacher" button and disabled state */
+        .availability-container button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+        }
+
+        .availability-container button:hover:not(:disabled) {
+            background-color: #30449a;
+            transform: translateY(-2px);
+        }
+
+        .availability-container button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .availability-status {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-vacant {
+            color: #43a047; /* Green for vacant */
+        }
+        
+        .status-available {
+            color: #707b8b; /* Gray for available */
+        }
+
+        /* New class for the 'booked' status */
+        .status-booked {
+            color: #d32f2f; /* Red for booked */
+        }
+
+        /* Responsive design for mobile view */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .dashboard-container.sidebar-open .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s forwards;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            position: relative;
+            box-shadow: var(--shadow-bold);
+            animation: slideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #555;
+            text-decoration: none;
+        }
+        
+        /* Teacher Card Styles */
+        .teacher-list-container {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            margin-top: 20px;
+        }
+
+        .teacher-card {
+            background-color: #f9f9f9;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            box-shadow: var(--shadow-subtle);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .teacher-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-bold);
+        }
+        
+        .teacher-card h3 {
+            margin: 0 0 5px 0;
+            color: var(--primary-color);
+        }
+
+        .teacher-card p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        /* Styles for the "Go Back" button */
+        .back-button {
+            display: inline-block;
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            text-decoration: underline;
+            transform: translateX(-5px);
+        }
+
+        /* Availability Day List */
+        .day-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .day-item {
+            padding: 10px 15px;
+            background-color: #e8eaf6;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        
+        .day-item:hover {
+            background-color: #c5cae9;
+        }
+
+        .day-item.selected {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .day-item.booked {
+            background-color: #d32f2f;
+            color: white;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Pay & Book button */
+        .pay-button-container {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .pay-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+        }
+        
+        .pay-button:hover:not(:disabled) {
+            background-color: #30449a;
+            transform: translateY(-2px);
+        }
+        
+        .pay-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .booking-success-message {
+            margin-top: 10px;
+            color: #43a047;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .message-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message-container label {
+            font-weight: 600;
+        }
+
+        .message-container textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            resize: vertical;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Top Navigation Bar -->
+        <header class="top-navbar">
+            <div class="menu-icon" onclick="toggleSidebar()">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <nav class="top-nav-items">
+                <a href="#" class="top-nav-link">Home</a>
+                <a href="#" class="top-nav-link">Settings</a>
+                <a href="#" class="top-nav-link">Profile</a>
+            </nav>
+        </header>
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <h2 class="dashboard-title">Student Panel</h2>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" class="nav-item active" data-section="announcements"><i class="fas fa-bullhorn"></i>Announcements</a></li>
+                    <li><a href="#" class="nav-item" data-section="rating"><i class="fas fa-star"></i>My Rating</a></li>
+                    <li><a href="#" class="nav-item" data-section="teaching-materials"><i class="fas fa-book-open"></i>Teaching Materials</a></li>
+                    <li><a href="#" class="nav-item" data-section="attendance"><i class="fas fa-check-circle"></i>My Attendance</a></li>
+                    <li class="dropdown-item">
+                        <!-- The "Lessons" link now acts as a dropdown toggle -->
+                        <a href="#" class="nav-item dropdown-toggle" data-target="#lesson-menu"><i class="fas fa-graduation-cap"></i>Lessons<i class="fas fa-caret-down dropdown-toggle-icon"></i></a>
+                        <!-- The dropdown menu is initially hidden and will be toggled with JavaScript -->
+                        <ul class="dropdown-menu" id="lesson-menu">
+                            <li><a href="#" data-section="learning-kit" class="nav-item"><i class="fas fa-box"></i>Learning Kit</a></li>
+                            <li><a href="#" data-section="message-to-teacher" class="nav-item"><i class="fas fa-envelope"></i>Message to Teacher</a></li>
+                            <li><a href="#" data-section="lesson-review" class="nav-item"><i class="fas fa-pen-fancy"></i>Lesson Review</a></li>
+                            <li><a href="#" data-section="lesson-history" class="nav-item"><i class="fas fa-history"></i>Lesson History</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#" class="nav-item" data-section="book-teacher-main"><i class="fas fa-calendar-alt"></i>Book a Teacher</a></li>
+                    <li><a href="#" class="nav-item" data-section="rank"><i class="fas fa-medal"></i>My Rank</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Welcome, Student!</h1>
+            </header>
+            <section id="announcements" class="content-section active">
+                <h2>Announcements</h2>
+                <p>This is where your teacher's announcements will be displayed.</p>
+            </section>
+            <section id="rating" class="content-section">
+                <h2>My Rating</h2>
+                <p>You can view your performance and ratings here.</p>
+            </section>
+            <section id="teaching-materials" class="content-section">
+                <h2>Teaching Materials</h2>
+                <p>Access and download lesson materials shared by your teacher.</p>
+            </section>
+            <section id="attendance" class="content-section">
+                <h2>My Attendance</h2>
+                <p>View your attendance record for all classes.</p>
+            </section>
+            <section id="learning-kit" class="content-section">
+                <h2>Learning Kit</h2>
+                <p>Access and download your learning materials here.</p>
+            </section>
+            <section id="message-to-teacher" class="content-section">
+                <h2>Message to Teacher</h2>
+                <p>Send a message to your teacher here.</p>
+            </section>
+            <section id="lesson-review" class="content-section">
+                <h2>Lesson Review</h2>
+                <p>Review your past lessons and provide feedback.</p>
+            </section>
+            <section id="lesson-history" class="content-section">
+                <h2>Lesson History</h2>
+                <p>See a complete history of all your lessons.</p>
+            </section>
+            <section id="book-teacher-main" class="content-section">
+                <h2>Book a Teacher</h2>
+                <p>Use this section to find and book a teacher.</p>
+                <button id="show-modal-button" class="pay-button">Find and Book a Teacher</button>
+            </section>
+            <section id="rank" class="content-section">
+                <h2>My Rank</h2>
+                <p>Check your rank and achievements here.</p>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for booking a teacher and selecting a date -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="modal-container">
+                <!-- Content will be injected here by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- New Modal for payment confirmation -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="payment-close-button">&times;</span>
+            <div id="payment-modal-container">
+                <!-- Payment summary and confirmation will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for sidebar functionality
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const dashboardContainer = document.querySelector('.dashboard-container');
+            const menuIcon = document.querySelector('.menu-icon');
+
+            sidebar.classList.toggle('active');
+            menuIcon.classList.toggle('active');
+            dashboardContainer.classList.toggle('sidebar-open');
+        }
+
+        // JavaScript for content section switching
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.sidebar-nav .nav-item');
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            const dropdownMenu = document.getElementById('lesson-menu');
+            const dropdownIcon = document.querySelector('.dropdown-toggle-icon');
+
+            // Handle the dropdown toggle
+            dropdownToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                dropdownMenu.classList.toggle('open');
+                dropdownIcon.classList.toggle('open');
+            });
+
+            // Handle the content switching for all other links
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const sectionId = link.dataset.section;
+
+                    // Only handle links with a data-section attribute
+                    if (sectionId) {
+                        e.preventDefault();
+
+                        // Deactivate all navigation links first
+                        document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
+                            item.classList.remove('active');
+                        });
+                        
+                        // Hide all content sections
+                        document.querySelectorAll('.content-section').forEach(section => {
+                            section.classList.remove('active');
+                        });
+
+                        // Show the selected section and activate the clicked link
+                        const targetSection = document.getElementById(sectionId);
+                        if (targetSection) {
+                            targetSection.classList.add('active');
+                        }
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            // --- Modal and Booking Logic ---
+            const bookingModal = document.getElementById('booking-modal');
+            const paymentModal = document.getElementById('payment-modal');
+            const showModalBtn = document.getElementById('show-modal-button');
+            const closeBookingModalBtn = document.querySelector('.close-button');
+            const closePaymentModalBtn = document.getElementById('payment-close-button');
+            const bookingModalContainer = document.getElementById('modal-container');
+            const paymentModalContainer = document.getElementById('payment-modal-container');
+
+            // Sample teacher data - in a real app this would come from an API
+            const teachers = [
+                { id: 't1', name: 'Ms. Elizabeth', specialty: 'English', rates: 50 },
+                { id: 't2', name: 'Mr. David', specialty: 'Math', rates: 60 },
+                { id: 't3', name: 'Mrs. Sofia', specialty: 'Filipino', rates: 45 },
+                { id: 't4', name: 'Mr. John', specialty: 'English', rates: 55 },
+                { id: 't5', name: 'Ms. Grace', specialty: 'Math', rates: 65 }
+            ];
+
+            // Helper function to generate mock availability data
+            function generateAvailability() {
+                const today = new Date();
+                const availability = {};
+                teachers.forEach(teacher => {
+                    const teacherAvail = {};
+                    for (let i = 0; i < 7; i++) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() + i);
+                        const dateString = date.toISOString().slice(0, 10);
+                        // Make some dates 'vacant' for demonstration
+                        teacherAvail[dateString] = { status: (i % 2 === 0) ? 'vacant' : 'available', message: null };
+                    }
+                    availability[teacher.id] = teacherAvail;
+                });
+                // Only initialize if data doesn't exist to preserve booked state
+                if (!localStorage.getItem('teacherAvailability')) {
+                    localStorage.setItem('teacherAvailability', JSON.stringify(availability));
+                }
+            }
+            
+            // Function to display all teachers in the modal
+            function showAllTeachers() {
+                bookingModalContainer.innerHTML = `
+                    <h3>Available Teachers</h3>
+                    <p>Select a teacher to view their availability and book a session.</p>
+                    <div class="teacher-list-container">
+                        ${teachers.map(t => `
+                            <div class="teacher-card" data-teacher-id="${t.id}">
+                                <h3>${t.name}</h3>
+                                <p>${t.specialty} Specialist</p>
+                                <p>Rate: $${t.rates}/hr</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                // Add click listeners to the teacher cards
+                document.querySelectorAll('.teacher-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const teacherId = e.currentTarget.dataset.teacherId;
+                        showTeacherAvailability(teacherId);
+                    });
+                });
+            }
+
+            // Function to display a single teacher's availability
+            function showTeacherAvailability(teacherId) {
+                const teacher = teachers.find(t => t.id === teacherId);
+                let availabilityData = JSON.parse(localStorage.getItem('teacherAvailability')) || {};
+                const teacherSchedule = availabilityData[teacherId] || {};
+
+                const today = new Date();
+                
+                bookingModalContainer.innerHTML = `
+                    <button class="back-button"><i class="fas fa-chevron-left"></i> Go Back</button>
+                    <h3>${teacher.name}'s Availability</h3>
+                    <p>Click on a vacant day to book your session.</p>
+                    <div class="day-list">
+                        ${Object.keys(teacherSchedule).map(date => {
+                            const booking = teacherSchedule[date];
+                            const status = booking.status;
+                            const isPastDate = new Date(date) < today;
+                            const isBooked = status === 'booked';
+                            
+                            let className = 'day-item';
+                            if (isBooked) className += ' booked';
+                            
+                            // Only allow clicks on vacant future dates
+                            if (status === 'vacant' && !isPastDate) className += ' selectable';
+                            
+                            return `
+                                <div class="${className}" data-date="${date}" data-status="${status}">
+                                    ${date}
+                                    ${isBooked ? '<span class="status-tag">Booked</span>' : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="pay-button-container">
+                        <p id="selected-date-info" style="display: none;"></p>
+                        <button id="pay-book-button" class="pay-button" disabled>Pay & Book</button>
+                    </div>
+                    <div id="booking-success-message" class="booking-success-message" style="display: none;">
+                        Appointment booked successfully!
+                    </div>
+                    <div id="message-container" class="message-container" style="display: none;">
+                        <label for="teacher-message">Message to Teacher (Optional):</label>
+                        <textarea id="teacher-message" placeholder="Enter your message here..."></textarea>
+                    </div>
+                `;
+
+                // Add "Go Back" functionality to go back to the teacher list
+                document.querySelector('.back-button').addEventListener('click', showAllTeachers);
+
+                const dayItems = document.querySelectorAll('.day-item.selectable');
+                const payButton = document.getElementById('pay-book-button');
+                const messageContainer = document.getElementById('message-container');
+                let selectedDate = null;
+                let messageText = '';
+
+                dayItems.forEach(item => {
+                    item.addEventListener('click', () => {
+                        // Deselect all other days first
+                        document.querySelectorAll('.day-item.selected').forEach(selectedItem => {
+                            selectedItem.classList.remove('selected');
+                        });
+                        
+                        // Select the clicked day
+                        item.classList.add('selected');
+                        selectedDate = item.dataset.date;
+                        
+                        // Enable the button and show info and message input
+                        payButton.disabled = false;
+                        document.getElementById('selected-date-info').textContent = `Booking ${teacher.name} for ${selectedDate}`;
+                        document.getElementById('selected-date-info').style.display = 'block';
+                        messageContainer.style.display = 'flex';
+                    });
+                });
+                
+                // Add an input listener for the message field
+                document.getElementById('teacher-message').addEventListener('input', (e) => {
+                    messageText = e.target.value;
+                });
+
+                // Handle the pay and book click
+                payButton.addEventListener('click', () => {
+                    if (selectedDate) {
+                        // Hide the first modal and show the payment modal
+                        bookingModal.style.display = 'none';
+                        showPaymentModal(teacher, selectedDate, messageText);
+                    }
+                });
+            }
+
+            // Function to show the payment modal
+            function showPaymentModal(teacher, date, message) {
+                paymentModalContainer.innerHTML = `
+                    <h3>Confirm Your Booking</h3>
+                    <p>Please confirm the details before proceeding with payment.</p>
+                    <div style="background-color: #f1f3f7; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <p><strong>Teacher:</strong> ${teacher.name}</p>
+                        <p><strong>Date:</strong> ${date}</p>
+                        <p><strong>Total Amount:</strong> $${teacher.rates}</p>
+                        ${message ? `<p><strong>Your Message:</strong> ${message}</p>` : ''}
+                    </div>
+                    <div style="text-align: center;">
+                        <button id="cancel-payment-button" class="pay-button" style="background-color: #707b8b; margin-right: 10px;">Cancel</button>
+                        <button id="simulate-payment-button" class="pay-button">Simulate Payment</button>
+                    </div>
+                `;
+                paymentModal.style.display = 'block';
+
+                // Add click listener for the "Simulate Payment" button
+                document.getElementById('simulate-payment-button').addEventListener('click', () => {
+                    // Simulate payment success
+                    let currentAvailability = JSON.parse(localStorage.getItem('teacherAvailability'));
+                    currentAvailability[teacher.id][date] = { status: 'booked', message: message };
+                    localStorage.setItem('teacherAvailability', JSON.stringify(currentAvailability));
+                    
+                    // Show success message and close both modals
+                    paymentModal.style.display = 'none';
+                    bookingModal.style.display = 'none';
+                    
+                    // You can add a success message to the main dashboard here if you want
+                    const mainContent = document.getElementById('book-teacher-main');
+                    mainContent.querySelector('h2').textContent = 'Booking Confirmed!';
+                    mainContent.querySelector('p').textContent = 'Your appointment has been successfully booked.';
+                    mainContent.querySelector('#show-modal-button').style.display = 'none';
+                });
+                
+                // Add click listener for the "Cancel" button
+                document.getElementById('cancel-payment-button').addEventListener('click', () => {
+                    paymentModal.style.display = 'none';
+                    bookingModal.style.display = 'block'; // Go back to the booking modal
+                });
+            }
+
+            // Show the modal and all teachers when the button is clicked
+            showModalBtn.addEventListener('click', () => {
+                bookingModal.style.display = 'block';
+                showAllTeachers();
+            });
+
+            // Close the booking modal
+            closeBookingModalBtn.addEventListener('click', () => {
+                bookingModal.style.display = 'none';
+            });
+
+            // Close the payment modal
+            closePaymentModalBtn.addEventListener('click', () => {
+                paymentModal.style.display = 'none';
+                bookingModal.style.display = 'block'; // Return to the booking modal
+            });
+            
+            // Close modals if the user clicks outside of them
+            window.addEventListener('click', (event) => {
+                if (event.target === bookingModal) {
+                    bookingModal.style.display = 'none';
+                }
+                if (event.target === paymentModal) {
+                    paymentModal.style.display = 'none';
+                }
+            });
+
+            // Initialize mock data
+            generateAvailability();
+        });
+    </script>
+</body>
+</html>
