@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Define CSS variables for a clean, modern color scheme */
+        :root {
+            --primary-color: #3f51b5; /* A deep indigo for primary accents */
+            --secondary-color: #f7f9fc; /* Off-white for background */
+            --sidebar-bg: #ffffff; /* White for the sidebar */
+            --text-dark: #333d47;
+            --text-light: #707b8b;
+            --hover-bg: #e8eaf6; /* Light purple for hover effects */
+            --shadow-subtle: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --shadow-bold: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Base styles with a fluid body and clean typography */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--secondary-color);
+            display: flex;
+            overflow-x: hidden;
+            color: var(--text-dark);
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Main dashboard layout */
+        .dashboard-container {
+            display: flex;
+            width: 100%;
+        }
+
+        /* Sidebar styles for a sleek slide-out effect */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: var(--text-dark);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease-in-out;
+            transform: translateX(-100%);
+            box-shadow: var(--shadow-bold);
+            z-index: 1000;
+            padding-top: 60px;
+            overflow-y: auto;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        /* New styles for edit and delete actions on the sidebar */
+        .nav-actions {
+            display: none;
+            margin-left: auto;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar.edit-mode .nav-actions {
+            display: flex;
+        }
+
+        .edit-icon, .delete-icon {
+            cursor: pointer;
+            color: var(--text-light);
+            transition: color 0.2s ease-in-out;
+        }
+
+        .edit-icon:hover {
+            color: var(--primary-color);
+        }
+
+        .delete-icon:hover {
+            color: #d32f2f;
+        }
+
+        /* Style for the 'add new link' button */
+        .add-nav-item {
+            padding: 10px 20px;
+            margin: 5px 10px;
+            border-radius: 12px;
+            transition: background-color 0.3s;
+        }
+
+        .add-nav-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .add-nav-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        /* Top navigation bar with a distinct color */
+        .top-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 98%;
+    height: 60px;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: var(--shadow-subtle);
+    z-index: 1001;
+}
+
+        /* Menu icon with a subtle, friendly hover effect */
+        .menu-icon {
+            cursor: pointer;
+            width: 30px;
+            height: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .menu-icon .bar {
+            width: 100%;
+            height: 3px;
+            background-color: white;
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 'X' transformation animation */
+        .menu-icon.active .bar:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-icon.active .bar:nth-child(1) {
+            transform: translateY(8.5px) rotate(45deg);
+        }
+
+        .menu-icon.active .bar:nth-child(3) {
+            transform: translateY(-8.5px) rotate(-45deg);
+        }
+
+        .top-nav-items a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 16px;
+            position: relative;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .top-nav-items a:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        .dashboard-title {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+            margin: 0 20px 30px 20px;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+.sidebar-nav li {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+        .sidebar-nav li a {
+            flex-grow: 1;
+        }
+
+        /* Enhanced hover and active states for navigation items */
+        .sidebar-nav .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: var(--text-light);
+            transition: background-color 0.3s, color 0.3s, transform 0.3s ease-out, box-shadow 0.3s ease-out;
+            border-radius: 12px;
+            margin: 5px 10px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav .nav-item i {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        /* Style for the dropdown icon */
+        .dropdown-toggle-icon {
+            margin-left: auto;
+            transform: rotate(0deg);
+            transition: transform 0.3s ease-out;
+        }
+
+        .dropdown-toggle-icon.open {
+            transform: rotate(-180deg);
+        }
+
+        .sidebar-nav .nav-item:hover {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        /* Active class for the currently selected nav item */
+        .sidebar-nav .nav-item.active {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+            font-weight: 600;
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(0);
+        }
+
+        /* The dropdown menu is now initially hidden */
+        .dropdown-menu {
+            display: none;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: #fcfdff;
+            border-radius: 0 0 12px 12px;
+            padding-left: 20px;
+        }
+
+        /* Show the dropdown menu when it has the 'open' class */
+        .dropdown-menu.open {
+            display: block;
+        }
+
+        .dropdown-item .dropdown-menu li a {
+            padding: 10px 10px;
+            display: block;
+            font-size: 15px;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.2s ease-in-out;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        .dropdown-item .dropdown-menu li a:hover {
+            background-color: #f1f3f7;
+            color: var(--primary-color);
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1;
+            padding: 80px 20px 20px 20px;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 0;
+            width: 100%;
+        }
+
+        .dashboard-container.sidebar-open .main-content {
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+
+        /* Content section with a smooth fade-in animation */
+        .content-section {
+            display: none;
+            background-color: var(--sidebar-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow-bold);
+            animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Keyframe animation for a more dynamic fade-in */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        /* Styles for the new Availability feature */
+        .availability-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        .availability-container label {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .availability-container input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .availability-container button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease;
+        }
+
+        .availability-container button:hover {
+            background-color: #30449a;
+            transform: translateY(-2px);
+        }
+        
+        .availability-status {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-vacant {
+            color: #d32f2f;
+        }
+        
+        .status-available {
+            color: #43a047;
+        }
+
+        /* Responsive design for mobile view */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .dashboard-container.sidebar-open .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* New styles for content management forms and lists */
+        .add-item-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .add-item-form input[type="text"],
+        .add-item-form textarea {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        .add-item-form button {
+            padding: 12px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .add-item-form button:hover {
+            opacity: 0.9;
+        }
+
+        .content-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .content-list li {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .item-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .item-actions .fas {
+            cursor: pointer;
+            color: var(--text-light);
+            transition: color 0.2s;
+        }
+        .item-actions .fa-edit:hover {
+            color: var(--primary-color);
+        }
+        .item-actions .fa-trash-alt:hover {
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="top-navbar">
+            <div class="menu-icon" onclick="toggleSidebar()">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <nav class="top-nav-items">
+                <a href="#" class="top-nav-link">Home</a>
+                <a href="#" class="top-nav-link">Settings</a>
+                <a href="#" class="top-nav-link">Profile</a>
+                <button id="edit-nav-btn" class="top-nav-link"><i class="fas fa-pencil-alt"></i> Edit</button>
+            </nav>
+        </header>
+
+        <aside class="sidebar">
+            <h2 class="dashboard-title">Dashboard</h2>
+            <nav class="sidebar-nav">
+                <ul id="main-nav-list">
+                    <li>
+                        <a href="#" class="nav-item active" data-section="announcements"><i class="fas fa-bullhorn"></i>Announcements</a>
+                        <div class="nav-actions">
+                            <i class="fas fa-edit edit-icon"></i>
+                            <i class="fas fa-trash-alt delete-icon"></i>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="rating"><i class="fas fa-star"></i>Rating</a>
+                        <div class="nav-actions">
+                            <i class="fas fa-edit edit-icon"></i>
+                            <i class="fas fa-trash-alt delete-icon"></i>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="#" data-section="favorites" class="nav-item"><i class="fas fa-heart"></i>Favorites</a>
+                        <div class="nav-actions">
+                            <i class="fas fa-edit edit-icon"></i>
+                            <i class="fas fa-trash-alt delete-icon"></i>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="teaching-materials"><i class="fas fa-book-open"></i>Teaching Materials</a>
+                        <div class="nav-actions">
+                            <i class="fas fa-edit edit-icon"></i>
+                            <i class="fas fa-trash-alt delete-icon"></i>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="attendance"><i class="fas fa-check-circle"></i>Attendance</a>
+                        <div class="nav-actions">
+                            <i class="fas fa-edit edit-icon"></i>
+                            <i class="fas fa-trash-alt delete-icon"></i>
+                        </div>
+                    </li>
+                    <li class="dropdown-item">
+                        <a href="#" class="nav-item dropdown-toggle" data-target="#lesson-menu"><i class="fas fa-graduation-cap"></i>Lesson<i class="fas fa-caret-down dropdown-toggle-icon"></i></a>
+                        <ul class="dropdown-menu" id="lesson-menu">
+                            <li><a href="#" data-section="book" class="nav-item"><i class="fas fa-book"></i>Book</a></li>
+                            <li><a href="#" data-section="learning-kit" class="nav-item"><i class="fas fa-box"></i>Learning Kit</a></li>
+                            <li><a href="#" data-section="students-info" class="nav-item"><i class="fas fa-users"></i>Student's Info</a></li>
+                            <li><a href="#" data-section="message-to-students" class="nav-item"><i class="fas fa-envelope"></i>Message to Students</a></li>
+                            <li><a href="#" data-section="lesson-review" class="nav-item"><i class="fas fa-pen-fancy"></i>Lesson Review</a></li>
+                            <li><a href="#" data-section="lesson-history" class="nav-item"><i class="fas fa-history"></i>Lesson History</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="availability"><i class="fas fa-calendar-alt"></i>Availability</a>
+                        <div class="nav-actions">
+                            <i class="fas fa-edit edit-icon"></i>
+                            <i class="fas fa-trash-alt delete-icon"></i>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item" data-section="rank"><i class="fas fa-medal"></i>Rank</a>
+                        <div class="nav-actions">
+                            <i class="fas fa-edit edit-icon"></i>
+                            <i class="fas fa-trash-alt delete-icon"></i>
+                        </div>
+                    </li>
+                </ul>
+                <li class="add-nav-item">
+                    <a href="#" class="nav-item" id="add-nav-link"><i class="fas fa-plus"></i> Add New Link</a>
+                </li>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Welcome to Your Dashboard!</h1>
+            </header>
+
+            <section id="announcements" class="content-section active">
+                <h2>Announcements</h2>
+                <form class="add-item-form" data-list-id="announcements-list">
+                    <input type="text" name="title" placeholder="Announcement Title" required>
+                    <textarea name="description" placeholder="Announcement Details" required></textarea>
+                    <button type="submit">Add Announcement</button>
+                </form>
+                <ul class="content-list" id="announcements-list"></ul>
+            </section>
+
+            <section id="rating" class="content-section">
+                <h2>Rating</h2>
+                <form class="add-item-form" data-list-id="rating-list">
+                    <input type="text" name="student" placeholder="Student Name" required>
+                    <input type="text" name="score" placeholder="Rating (e.g., 5/5, A+)" required>
+                    <button type="submit">Add Rating</button>
+                </form>
+                <ul class="content-list" id="rating-list"></ul>
+            </section>
+
+            <section id="favorites" class="content-section">
+                <h2>Favorites</h2>
+                <form class="add-item-form" data-list-id="favorites-list">
+                    <input type="text" name="material" placeholder="Favorite Material Title" required>
+                    <input type="text" name="type" placeholder="Type (e.g., Lesson, Video)" required>
+                    <button type="submit">Add Favorite</button>
+                </form>
+                <ul class="content-list" id="favorites-list"></ul>
+            </section>
+
+            <section id="teaching-materials" class="content-section">
+                <h2>Teaching Materials</h2>
+                <form class="add-item-form" data-list-id="teaching-materials-list">
+                    <input type="text" name="title" placeholder="Material Title" required>
+                    <input type="text" name="file" placeholder="File Name/Link" required>
+                    <button type="submit">Add Material</button>
+                </form>
+                <ul class="content-list" id="teaching-materials-list"></ul>
+            </section>
+
+            <section id="attendance" class="content-section">
+                <h2>Attendance</h2>
+                <form class="add-item-form" data-list-id="attendance-list">
+                    <input type="text" name="student" placeholder="Student Name" required>
+                    <input type="text" name="date" placeholder="Date (e.g., MM/DD/YYYY)" required>
+                    <input type="text" name="status" placeholder="Status (e.g., Present, Absent)" required>
+                    <button type="submit">Add Attendance</button>
+                </form>
+                <ul class="content-list" id="attendance-list"></ul>
+            </section>
+
+            <section id="book" class="content-section">
+                <h2>Book</h2>
+                <form class="add-item-form" data-list-id="book-list">
+                    <input type="text" name="title" placeholder="Book Title" required>
+                    <input type="text" name="author" placeholder="Author Name" required>
+                    <button type="submit">Add Book</button>
+                </form>
+                <ul class="content-list" id="book-list"></ul>
+            </section>
+            
+            <section id="learning-kit" class="content-section">
+                <h2>Learning Kit</h2>
+                <form class="add-item-form" data-list-id="learning-kit-list">
+                    <input type="text" name="kit" placeholder="Kit Name" required>
+                    <input type="text" name="items" placeholder="Items (comma-separated)" required>
+                    <button type="submit">Add Learning Kit</button>
+                </form>
+                <ul class="content-list" id="learning-kit-list"></ul>
+            </section>
+
+            <section id="students-info" class="content-section">
+                <h2>Student's Info</h2>
+                <form class="add-item-form" data-list-id="students-info-list">
+                    <input type="text" name="name" placeholder="Student Name" required>
+                    <input type="text" name="grade" placeholder="Grade" required>
+                    <button type="submit">Add Student Info</button>
+                </form>
+                <ul class="content-list" id="students-info-list"></ul>
+            </section>
+
+            <section id="message-to-students" class="content-section">
+                <h2>Message to Students</h2>
+                <form class="add-item-form" data-list-id="message-to-students-list">
+                    <input type="text" name="subject" placeholder="Message Subject" required>
+                    <textarea name="body" placeholder="Message Body" required></textarea>
+                    <button type="submit">Send Message</button>
+                </form>
+                <ul class="content-list" id="message-to-students-list"></ul>
+            </section>
+
+            <section id="lesson-review" class="content-section">
+                <h2>Lesson Review</h2>
+                <form class="add-item-form" data-list-id="lesson-review-list">
+                    <input type="text" name="title" placeholder="Lesson Title" required>
+                    <textarea name="review" placeholder="Your Review" required></textarea>
+                    <button type="submit">Add Review</button>
+                </form>
+                <ul class="content-list" id="lesson-review-list"></ul>
+            </section>
+            
+            <section id="lesson-history" class="content-section">
+                <h2>Lesson History</h2>
+                <form class="add-item-form" data-list-id="lesson-history-list">
+                    <input type="text" name="title" placeholder="Lesson Title" required>
+                    <input type="text" name="date" placeholder="Date (e.g., MM/DD/YYYY)" required>
+                    <button type="submit">Add Lesson</button>
+                </form>
+                <ul class="content-list" id="lesson-history-list"></ul>
+            </section>
+
+            <section id="availability" class="content-section">
+                <h2>Set Availability</h2>
+                <p>Choose a day to set your availability status.</p>
+                <div class="availability-container">
+                    <label for="date-picker">Select Date:</label>
+                    <input type="date" id="date-picker" value="">
+                    <button id="toggle-availability">Set as Vacant</button>
+                    <p>Current Status: <span id="availability-status"></span></p>
+                </div>
+            </section>
+
+            <section id="rank" class="content-section">
+                <h2>Rank</h2>
+                <form class="add-item-form" data-list-id="rank-list">
+                    <input type="text" name="rank" placeholder="Rank Title (e.g., Top 10, Expert)" required>
+                    <input type="text" name="criteria" placeholder="Criteria" required>
+                    <button type="submit">Add Rank</button>
+                </form>
+                <ul class="content-list" id="rank-list"></ul>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // JavaScript for sidebar functionality
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const dashboardContainer = document.querySelector('.dashboard-container');
+            const menuIcon = document.querySelector('.menu-icon');
+
+            sidebar.classList.toggle('active');
+            menuIcon.classList.toggle('active');
+            dashboardContainer.classList.toggle('sidebar-open');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const navItems = document.querySelectorAll('.sidebar-nav .nav-item');
+            const dropdownToggle = document.querySelector('.dropdown-toggle');
+            const dropdownMenu = document.getElementById('lesson-menu');
+            const dropdownIcon = document.querySelector('.dropdown-toggle-icon');
+
+            // Handle the dropdown toggle click separately to avoid page jumps
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener('click', (e) => {
+                    e.preventDefault(); // This is the key fix
+                    dropdownMenu.classList.toggle('open');
+                    dropdownIcon.classList.toggle('open');
+                });
+            }
+
+            // Handle content section switching for all other navigation items
+            navItems.forEach(item => {
+                // Ensure we don't attach this handler to the dropdown toggle itself
+                if (!item.classList.contains('dropdown-toggle')) {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        
+                        // Deactivate all nav links first
+                        navItems.forEach(nav => nav.classList.remove('active'));
+                        
+                        // Hide all content sections
+                        document.querySelectorAll('.content-section').forEach(section => {
+                            section.classList.remove('active');
+                        });
+                        
+                        // Show the selected section and activate the clicked link
+                        const sectionId = item.dataset.section;
+                        const targetSection = document.getElementById(sectionId);
+                        if (targetSection) {
+                            targetSection.classList.add('active');
+                        }
+                        item.classList.add('active');
+                    });
+                }
+            });
+
+            // --- Sidebar Edit Feature Logic ---
+            const editNavBtn = document.getElementById('edit-nav-btn');
+            const sidebar = document.querySelector('.sidebar');
+            const mainNavList = document.getElementById('main-nav-list');
+            const addNavBtn = document.getElementById('add-nav-link');
+
+            // Toggle edit mode
+            editNavBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('edit-mode');
+            });
+
+            // Add a new nav item
+            addNavBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const linkText = prompt("Enter the new link name:");
+                if (linkText) {
+                    const iconClass = prompt("Enter the Font Awesome icon class (e.g., fas fa-home):");
+                    if (iconClass) {
+                        const newSectionId = linkText.toLowerCase().replace(/\s/g, '-');
+                        const newNavItemLi = document.createElement('li');
+                        newNavItemLi.innerHTML = `
+                            <a href="#" class="nav-item" data-section="${newSectionId}"><i class="${iconClass}"></i>${linkText}</a>
+                            <div class="nav-actions">
+                                <i class="fas fa-edit edit-icon"></i>
+                                <i class="fas fa-trash-alt delete-icon"></i>
+                            </div>
+                        `;
+
+                        // Add a corresponding content section with a generic form
+                        const newContentSection = document.createElement('section');
+                        newContentSection.id = newSectionId;
+                        newContentSection.className = 'content-section';
+                        newContentSection.innerHTML = `
+                            <h2>${linkText}</h2>
+                            <form class="add-item-form" data-list-id="${newSectionId}-list">
+                                <input type="text" name="item1" placeholder="Item 1" required>
+                                <input type="text" name="item2" placeholder="Item 2">
+                                <button type="submit">Add ${linkText}</button>
+                            </form>
+                            <ul class="content-list" id="${newSectionId}-list"></ul>
+                        `;
+
+                        document.querySelector('.main-content').appendChild(newContentSection);
+                        mainNavList.appendChild(newNavItemLi);
+
+                        // Re-attach event listener to the new nav link
+                        const newNavLink = newNavItemLi.querySelector('.nav-item');
+                        if (!newNavLink.classList.contains('dropdown-toggle')) {
+                            newNavLink.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                navItems.forEach(nav => nav.classList.remove('active'));
+                                document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+                                document.getElementById(newSectionId).classList.add('active');
+                                newNavLink.classList.add('active');
+                            });
+                        }
+
+                        // Also attach event listener to the new form
+                        const newForm = newContentSection.querySelector('.add-item-form');
+                        if (newForm) {
+                            newForm.addEventListener('submit', handleFormSubmit);
+                        }
+                    }
+                }
+            });
+
+            // Event delegation for deleting and editing sidebar items
+            mainNavList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-icon')) {
+                    const navItem = e.target.closest('li');
+                    const sectionId = navItem.querySelector('.nav-item').dataset.section;
+                    if (confirm("Are you sure you want to delete this link?")) {
+                        navItem.remove();
+                        const correspondingSection = document.getElementById(sectionId);
+                        if (correspondingSection) {
+                            correspondingSection.remove();
+                            // Also clear the localStorage for this section
+                            localStorage.removeItem(sectionId);
+                        }
+                    }
+                }
+                if (e.target.classList.contains('edit-icon')) {
+                    const navItem = e.target.closest('li');
+                    const navLink = navItem.querySelector('.nav-item');
+                    const currentText = navLink.textContent.trim();
+                    const newText = prompt("Edit link name:", currentText);
+                    if (newText && newText !== currentText) {
+                        const icon = navLink.querySelector('i');
+                        navLink.innerHTML = `<i class="${icon.className}"></i>${newText}`;
+                        const sectionId = navLink.dataset.section;
+                        const contentSection = document.getElementById(sectionId);
+                        if (contentSection) {
+                            contentSection.querySelector('h2').textContent = newText;
+                        }
+                    }
+                }
+            });
+
+            // --- Dynamic Content Management Logic ---
+            const dataStore = {
+                'announcements': [],
+                'rating': [],
+                'favorites': [],
+                'teaching-materials': [],
+                'attendance': [],
+                'book': [],
+                'learning-kit': [],
+                'students-info': [],
+                'message-to-students': [],
+                'lesson-review': [],
+                'lesson-history': [],
+                'rank': []
+            };
+
+            function loadData() {
+                for (const key in dataStore) {
+                    const data = localStorage.getItem(key);
+                    if (data) {
+                        dataStore[key] = JSON.parse(data);
+                        renderList(key);
+                    }
+                }
+            }
+
+            function saveData(key) {
+                localStorage.setItem(key, JSON.stringify(dataStore[key]));
+            }
+
+            function renderList(key) {
+                const list = document.getElementById(`${key}-list`);
+                if (!list) return;
+                list.innerHTML = '';
+                dataStore[key].forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.dataset.index = index;
+                    const itemHTML = Object.values(item).map(value => `<span class="item-text">${value}</span>`).join(' - ');
+                    li.innerHTML = `
+                        <div class="item-info">${itemHTML}</div>
+                        <div class="item-actions">
+                            <i class="fas fa-edit edit-item" data-key="${key}"></i>
+                            <i class="fas fa-trash-alt delete-item" data-key="${key}"></i>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+
+            function handleFormSubmit(e) {
+                e.preventDefault();
+                const form = e.target;
+                const key = form.dataset.listId.replace('-list', '');
+                const formData = new FormData(form);
+                const item = {};
+                for (const [name, value] of formData.entries()) {
+                    item[name] = value;
+                }
+                dataStore[key].push(item);
+                saveData(key);
+                renderList(key);
+                form.reset();
+            }
+
+            function handleContentListClick(e) {
+                const target = e.target;
+                const key = target.dataset.key;
+                if (!key) return;
+
+                const listItem = target.closest('li');
+                const index = parseInt(listItem.dataset.index);
+
+                if (target.classList.contains('delete-item')) {
+                    if (confirm("Are you sure you want to delete this item?")) {
+                        dataStore[key].splice(index, 1);
+                        saveData(key);
+                        renderList(key);
+                    }
+                }
+                
+                if (target.classList.contains('edit-item')) {
+                    const oldItem = dataStore[key][index];
+                    const newItem = {};
+                    for (const prop in oldItem) {
+                        const oldValue = oldItem[prop];
+                        const newValue = prompt(`Edit ${prop}:`, oldValue);
+                        if (newValue !== null) {
+                            newItem[prop] = newValue;
+                        } else {
+                            newItem[prop] = oldValue;
+                        }
+                    }
+                    dataStore[key][index] = newItem;
+                    saveData(key);
+                    renderList(key);
+                }
+            }
+
+            // Attach event listeners to all forms and content lists
+            document.querySelectorAll('.add-item-form').forEach(form => {
+                form.addEventListener('submit', handleFormSubmit);
+            });
+            document.querySelectorAll('.content-section').forEach(section => {
+                const list = section.querySelector('.content-list');
+                if (list) {
+                    list.addEventListener('click', handleContentListClick);
+                }
+            });
+
+            // --- Availability Feature Logic (from previous code) ---
+            const datePicker = document.getElementById('date-picker');
+            const toggleButton = document.getElementById('toggle-availability');
+            const statusDisplay = document.getElementById('availability-status');
+
+            let availabilityData = JSON.parse(localStorage.getItem('teacherAvailability')) || {};
+            
+            function updateStatusUI(date) {
+                const status = availabilityData[date] || 'available';
+                statusDisplay.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+                statusDisplay.className = '';
+                statusDisplay.classList.add('availability-status', `status-${status}`);
+                toggleButton.textContent = status === 'available' ? 'Set as Vacant' : 'Set as Available';
+            }
+
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            const day = today.getDate().toString().padStart(2, '0');
+            const defaultDate = `${year}-${month}-${day}`;
+            datePicker.value = defaultDate;
+            updateStatusUI(defaultDate);
+
+            datePicker.addEventListener('change', () => {
+                const selectedDate = datePicker.value;
+                updateStatusUI(selectedDate);
+            });
+
+            toggleButton.addEventListener('click', () => {
+                const selectedDate = datePicker.value;
+                if (!selectedDate) {
+                    alert("Please select a date first.");
+                    return;
+                }
+                const currentStatus = availabilityData[selectedDate] || 'available';
+                const newStatus = currentStatus === 'available' ? 'vacant' : 'available';
+                availabilityData[selectedDate] = newStatus;
+                localStorage.setItem('teacherAvailability', JSON.stringify(availabilityData));
+                updateStatusUI(selectedDate);
+            });
+
+            // Initial data load on page load
+            loadData();
+        });
+    </script>
+</body>
+</html>
